@@ -8,7 +8,7 @@
 
 ## 概述
 
-通过扫描中二节奏（CHUNITHM）街机音游进程（`chusanApp.exe`）的内存定位判定计数地址，并通过本地 HTTP 服务器以 SSE（Server-Sent Events）协议实时输出。
+通过扫描中二节奏（CHUNITHM）街机音游进程（`chusanApp.exe`）的内存定位判定计数地址，并通过本地 HTTP 服务器以 SSE（Server-Sent Events）协议实时输出。仅包含Justice Critical、Justice、Attack、Miss四种判定数据。
 
 ### 组件
 

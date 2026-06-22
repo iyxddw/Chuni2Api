@@ -10,7 +10,7 @@
 
 ## Overview
 
-Scans the memory of CHUNITHM arcade rhythm game process (`chusanApp.exe`) to locate judgment count addresses, and exposes them in real time via a local HTTP server with Server-Sent Events (SSE).
+Scans the memory of CHUNITHM arcade rhythm game process (`chusanApp.exe`) to locate judgment count addresses, and exposes them in real time via a local HTTP server with Server-Sent Events (SSE).Only includes Justice Critical, Justice, Attack, and Miss judgment data.
 
 ### Components
 
