@@ -10,15 +10,16 @@
 
 ## Overview
 
-Scans the memory of CHUNITHM arcade rhythm game process (`chusanApp.exe`) to locate judgment count addresses, and exposes them in real time via a local HTTP server with Server-Sent Events (SSE).Only includes Justice Critical, Justice, Attack, and Miss judgment data.
+Scans the memory of CHUNITHM arcade rhythm game process (`chusanApp.exe`) to locate judgment count addresses, and exposes them in real time via a local HTTP server with Server-Sent Events (SSE). Only includes Justice Critical, Justice, Attack, and Miss judgment data.
 
 ### Components
 
 | File | Description |
 |------|-------------|
 | [chuni2api.py](chuni2api.py) | Python version — reads game memory externally. Start anytime to begin reading. |
-| [chuni2api.cpp](chuni2api.cpp) | C++ version — starts with the game, relatively simpler. |
+| [chuni2api.cpp](chuni2api.cpp) | C++ DLL version — starts with the game, relatively simpler. |
 | [web.py](web.py) | Test frontend integration page. |
+| [DGLAB](/examples/DGLAB/) | DGHUB integration example. |
 
 ### Features
 
@@ -61,6 +62,27 @@ python web.py
 ```
 
 `web.py` has zero external dependencies — standard library only.
+
+---
+
+### DGHUB Integration
+
+[About DGHUB](https://www.bilibili.com/video/BV1gM9tBFEmJ/)
+
+Add it to the DGHUB plugin list, configure it to connect to the SSE endpoint, and it's ready to use.
+You can edit the intensity function in the config editor.
+
+Available variables:
+```
+jc=J-Critical, j=Justice, a=Attack, m=Miss
+```
+
+Example:
+```
+sqrt(m) * 0.1
+```
+
+A diminishing growth curve — 100 misses caps at 1.0, corresponding to 100% of the output intensity upper limit.
 
 ---
 
