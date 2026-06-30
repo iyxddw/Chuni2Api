@@ -17,6 +17,7 @@
 | [chuni2api.py](chuni2api.py) | Python 版 — 从外部读取游戏内存。随时启动开始读取 |
 | [chuni2api.cpp](chuni2api.cpp) | C++ 版 — 随游戏启动，相对简单一点 |
 | [web.py](web.py) | 测试前端对接页面 |
+| [DGLAB](/examples/DGLAB/) | DGHUB 对接示例 |
 
 ### 功能特性
 
@@ -61,7 +62,20 @@ python web.py
 
 ---
 
+### DGHUB对接
+[关于DGHUB](https://www.bilibili.com/video/BV1gM9tBFEmJ/)  
 
+直接添加进入DGHUB插件列表，修改配置连接到sse端点即可使用
+可在配置编辑页面编辑强度变化函数
+可用变量有
+```
+jc=J-Critical, j=Justice, a=Attack, m=Miss
+```
+示例
+```
+sqrt(m) * 0.1
+```
+增速放缓的递增曲线，100个miss为最大值1，对应输出强度上限的100%
 
 ## API 端点
 

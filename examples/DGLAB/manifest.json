@@ -1,0 +1,73 @@
+{
+  "id": "chuni2_hardware",
+  "name": "CHUNITHM 硬件联动",
+  "version": "0.1.0",
+  "sdk": "1",
+  "author": "Chuni2Api",
+  "description": "读取 CHUNITHM 游戏内判定数据，实时联动外部硬件（DGLab 等）。支持固定强度 / 自定义公式两种模式。",
+  "entry": "main.py",
+  "config_schema": [
+    {
+      "section": "连接",
+      "fields": [
+        {
+          "key": "endpoint",
+          "type": "text",
+          "label": "SSE 服务端地址",
+          "default": "http://localhost:8888/events",
+          "description": "Chuni2Api 的 /events SSE 端点 URL"
+        },
+        {
+          "key": "debug",
+          "type": "bool",
+          "label": "调试日志",
+          "default": false,
+          "description": "开启后每次判定数据变化 & 触发操作时输出详细日志"
+        }
+      ]
+    },
+    {
+      "section": "触发",
+      "fields": [
+        {
+          "key": "mode",
+          "type": "select",
+          "label": "触发模式",
+          "default": "fixed",
+          "options": [
+            { "label": "固定强度", "value": "fixed" },
+            { "label": "函数模式", "value": "function" }
+          ],
+          "description": "固定强度: 每次 MISS 输出固定值 / 函数模式: 用公式实时计算强度"
+        },
+        {
+          "key": "fixed_strength",
+          "type": "percent",
+          "label": "固定强度",
+          "default": 30,
+          "description": "【固定模式】每次 MISS 时输出的强度百分比（0~100）"
+        },
+        {
+          "key": "formula",
+          "type": "text",
+          "label": "强度公式",
+          "default": "min(m * 0.05, 1)",
+          "description": "【函数模式】公式输出 0~1 比值，插件自动 ×100 转强度%。变量: jc=J-Critical, j=Justice, a=Attack, m=Miss。数学函数: sqrt sin cos tan asin acos atan log log2 log10 exp pow abs round min max。常量: pi e。示例: min(m*0.05, 1) | sqrt(m/100) | sin(m*0.3)*0.5+0.5 | m/(jc+j+a+m+1)。出错时输出 0。"
+        },
+        {
+          "key": "duration_s",
+          "type": "duration",
+          "label": "触发持续时间",
+          "default": 1.5,
+          "description": "每次触发的波形持续时间（秒）"
+        },
+        {
+          "key": "channel",
+          "type": "channel",
+          "label": "输出通道",
+          "default": "both"
+        }
+      ]
+    }
+  ]
+}
