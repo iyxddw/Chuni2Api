@@ -69,7 +69,7 @@ python web.py
 
 [About DGHUB](https://www.bilibili.com/video/BV1gM9tBFEmJ/)
 
-Add it to the DGHUB plugin list, configure it to connect to the SSE endpoint, and it's ready to use.
+Compress the entire plugin folder (e.g., `DGLAB/`) into a ZIP file, then add or import this ZIP file into the DGHUB plugin list. Configure DGHUB to connect to the SSE endpoint, and it's ready to use.
 You can edit the intensity function in the config editor.
 
 Available variables:

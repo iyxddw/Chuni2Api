@@ -65,7 +65,8 @@ python web.py
 ### DGHUB对接
 [关于DGHUB](https://www.bilibili.com/video/BV1gM9tBFEmJ/)  
 
-直接添加进入DGHUB插件列表，修改配置连接到sse端点即可使用
+请将 `DGLAB` 目录下载后压缩（如为 zip 格式），在 DGHUB 插件管理页面选择“添加插件”并上传压缩包。随后，进入插件配置页面，将 SSE 端点地址（如 `http://localhost:8888/events`）填写到对应位置即可使用。
+
 可在配置编辑页面编辑强度变化函数
 可用变量有
 ```
