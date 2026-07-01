@@ -39,6 +39,7 @@ async def main() -> None:
         "formula": "min(m * 0.05, 1)",
         "duration_s": 1.5,
         "channel": "both",
+        "preset": "CS2-受伤",
     }
 
     # 函数模式可用的数学函数
@@ -233,13 +234,14 @@ async def main() -> None:
                         "delta_pct": pct,
                         "strength_mode": "rollback",
                         "duration_s": cfg["duration_s"],
+                        "preset": cfg["preset"],
                         "channel": cfg["channel"],
                         "label": f"MISS ×{cur} @ {pct}%",
                     }))
                 if cfg["debug"]:
                     await ws.send(json.dumps({
                         "op": "log", "level": "debug",
-                        "message": f"TRIGGER: miss {last_miss}→{cur} | mode={cfg['mode']} | delta={pct}% | dur={cfg['duration_s']}s | ch={cfg['channel']}",
+                        "message": f"TRIGGER: miss {last_miss}→{cur} | mode={cfg['mode']} | delta={pct}% | dur={cfg['duration_s']}s | ch={cfg['channel']} | preset={cfg['preset']}",
                     }))
                 await ws.send(json.dumps({
                     "op": "status",
@@ -292,7 +294,7 @@ async def main() -> None:
                             cfg[k] = msg["data"][k]
                     await ws.send(json.dumps({
                         "op": "log", "level": "info",
-                        "message": f"配置: endpoint={cfg['endpoint']}, mode={cfg['mode']}, dur={cfg['duration_s']}s, ch={cfg['channel']}, debug={cfg['debug']}",
+                        "message": f"配置: endpoint={cfg['endpoint']}, mode={cfg['mode']}, dur={cfg['duration_s']}s, ch={cfg['channel']}, preset={cfg['preset']}, debug={cfg['debug']}",
                     }))
                     if sse_thread[0] is None:
                         sse_start(cfg["endpoint"])

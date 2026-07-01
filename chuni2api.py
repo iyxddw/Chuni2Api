@@ -194,7 +194,7 @@ def main():
             time.sleep(1)
 
     while True:
-        setstatus("扫描字段名签名（需在打歌中途）...")
+        setstatus("扫描字段名签名...")
         addrs    = {}
         attempts = 0
         while not addrs:
