@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CHUNITHM // JUDGE.STREAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:      #0b0c0e;
+  --ink:     #e8e6e1;
+  --dim:     #5a5d63;
+  --faint:   #34373c;
+  --line:    #1e2126;
+  --veil:    rgba(11,12,14,.88);
+  --jc:      #f5c84c;   /* JUSTICE CRITICAL — gold  */
+  --js:      #f08c3a;   /* JUSTICE          — amber */
+  --at:      #4fc77a;   /* ATTACK           — green */
+  --ms:      #9aa0a8;   /* MISS             — grey  */
+  --glow-jc: rgba(245,200,76,.55);
+  --glow-at: rgba(79,199,122,.5);
+  --glow-ms: rgba(255,72,72,.65);
+}
+:root[data-theme="light"]{
+  --bg:      #f5f4f0;
+  --ink:     #1b1c1f;
+  --dim:     #7d8085;
+  --faint:   #c6c7c3;
+  --line:    #e4e3de;
+  --veil:    rgba(245,244,240,.9);
+  --jc:      #b8890b;
+  --js:      #cd5f16;
+  --at:      #178a4c;
+  --ms:      #7c828b;
+  --glow-jc: rgba(184,137,11,.4);
+  --glow-at: rgba(23,138,76,.38);
+  --glow-ms: rgba(214,40,40,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  height:100vh;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+  transition:background .3s,color .3s;
+}
+
+/* ── edge fx ────────────────────────────────────────── */
+#glow,#flash{
+  position:fixed;top:0;left:0;right:0;height:14vh;
+  pointer-events:none;opacity:0;z-index:5;
+}
+#glow{transition:opacity .6s}
+#glow.gold{
+  background:linear-gradient(to bottom,var(--glow-jc),transparent);
+  animation:breathe 2.6s ease-in-out infinite;
+}
+#glow.green{
+  background:linear-gradient(to bottom,var(--glow-at),transparent);
+  animation:breathe 2.6s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:.22}50%{opacity:.95}}
+#flash{background:linear-gradient(to bottom,var(--glow-ms),transparent)}
+#flash.hit{animation:missflash .5s ease-out}
+@keyframes missflash{0%{opacity:0}10%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  #glow.gold,#glow.green{animation:none;opacity:.5}
+  #flash.hit{animation:none}
+}
+
+/* ── header ─────────────────────────────────────────── */
+header{
+  display:flex;align-items:center;gap:2.4vw;
+  padding:1.6vh 2.4vw;
+  border-bottom:1px solid var(--line);
+  font-size:clamp(9px,1.5vh,14px);
+  letter-spacing:.22em;
+  flex:none;
+}
+.brand{font-weight:600;color:var(--ink)}
+.brand span{color:var(--dim);font-weight:400}
+.hstat{color:var(--dim);display:flex;align-items:baseline;gap:.8em}
+.dot{
+  display:inline-block;width:.55em;height:.55em;border-radius:50%;
+  background:var(--faint);vertical-align:baseline;transform:translateY(-1px);
+}
+.dot.live{background:var(--at)}
+.dot.wait{background:var(--js)}
+.dot.dead{background:var(--faint)}
+#elapsed{color:var(--dim)}
+.spacer{flex:1}
+.hbtn{
+  background:none;border:1px solid var(--faint);color:var(--dim);
+  font:inherit;letter-spacing:.22em;
+  padding:.55em 1.2em;cursor:pointer;
+  transition:color .15s,border-color .15s;
+}
+.hbtn:hover,.hbtn:focus-visible{color:var(--ink);border-color:var(--dim);outline:none}
+
+/* ── config panel ───────────────────────────────────── */
+#cfg{
+  position:fixed;inset:0;z-index:10;
+  background:var(--veil);
+  display:none;align-items:center;justify-content:center;
+}
+#cfg.open{display:flex}
+.seg{display:flex;gap:0}
+.seg .hbtn{min-width:5.5em;text-align:center}
+.seg .hbtn + .hbtn{border-left:none}
+.seg .hbtn.on{color:var(--bg);background:var(--ink);border-color:var(--ink)}
+.panel{
+  background:var(--bg);
+  border:1px solid var(--faint);
+  padding:4vh 3vw;
+  width:min(560px,86vw);
+  display:flex;flex-direction:column;gap:2.6vh;
+}
+.panel h2{
+  font-size:clamp(10px,1.7vh,15px);font-weight:600;
+  letter-spacing:.34em;color:var(--ink);
+}
+.panel h2 span{color:var(--dim);font-weight:400}
+.field label{
+  display:block;font-size:clamp(9px,1.4vh,13px);
+  letter-spacing:.22em;color:var(--dim);margin-bottom:1vh;
+}
+.field input{
+  width:100%;background:none;color:var(--ink);
+  border:1px solid var(--faint);
+  font:inherit;font-size:16px;letter-spacing:.06em;
+  padding:.7em .9em;
+}
+.field input:focus{border-color:var(--dim);outline:none}
+.hint{font-size:clamp(9px,1.4vh,13px);letter-spacing:.12em;color:var(--faint);line-height:1.8}
+#testout{font-size:clamp(9px,1.4vh,13px);letter-spacing:.18em;color:var(--dim);min-height:1.4em}
+#testout.ok{color:var(--at)}
+#testout.bad{color:var(--js)}
+.panel .btns{display:flex;gap:1.2vw;justify-content:flex-end;flex-wrap:wrap}
+
+/* ── judgment columns ───────────────────────────────── */
+main{flex:1;display:flex;min-height:0}
+.col{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
+  gap:2.4vh;
+  padding:2vh 1vw;
+  position:relative;
+}
+.col + .col{border-left:1px solid var(--line)}
+
+.label{
+  font-size:clamp(9px,1.7vh,16px);
+  letter-spacing:.34em;
+  color:var(--dim);
+  text-align:center;
+  line-height:1.7;
+  white-space:pre-line;
+}
+.num{
+  font-weight:100;
+  font-size:min(23vh,10vw);
+  line-height:1;
+  color:var(--accent);
+  transition:opacity .3s;
+}
+.num.tick{animation:tick .18s ease-out}
+@keyframes tick{from{opacity:.35}to{opacity:1}}
+
+.mem{
+  font-size:clamp(8px,1.4vh,13px);
+  letter-spacing:.18em;
+  color:var(--faint);
+}
+.mem b{font-weight:400;color:var(--dim)}
+
+.col.jc{--accent:var(--jc)}
+.col.js{--accent:var(--js)}
+.col.at{--accent:var(--at)}
+.col.ms{--accent:var(--ms)}
+
+/* track-end: freeze look */
+body.ended .num{opacity:.85}
+body.ended .mem{color:var(--faint)}
+
+/* ── footer ─────────────────────────────────────────── */
+footer{
+  flex:none;
+  display:flex;align-items:center;gap:2.4vw;
+  padding:1.6vh 2.4vw;
+  border-top:1px solid var(--line);
+  font-size:clamp(9px,1.5vh,14px);
+  letter-spacing:.22em;
+  color:var(--dim);
+  position:relative;
+}
+footer b{font-weight:500;color:var(--ink)}
+#badge{
+  position:absolute;left:50%;transform:translateX(-50%);
+  font-weight:600;letter-spacing:.5em;text-indent:.5em;
+  color:var(--jc);
+  opacity:0;transition:opacity .4s;
+}
+body.ended #badge.show{opacity:1}
+#endline{
+  position:absolute;top:-1px;left:50%;height:1px;width:0;
+  background:var(--jc);
+  transition:width 1.2s cubic-bezier(.2,.8,.2,1),left 1.2s cubic-bezier(.2,.8,.2,1);
+}
+body.ended #endline{left:0;width:100%}
+@media (prefers-reduced-motion:reduce){
+  .num.tick{animation:none}
+  #endline{transition:none}
+}
+
+/* portrait fallback: 2×2, in case the screen gets rotated */
+@media (orientation:portrait){
+  main{flex-wrap:wrap}
+  .col{flex:1 1 50%}
+  .col + .col{border-left:none}
+  .col:nth-child(even){border-left:1px solid var(--line)}
+  .col:nth-child(n+3){border-top:1px solid var(--line)}
+  .num{font-size:min(12vh,18vw)}
+}
+</style>
+</head>
+<body>
+
+<div id="glow"></div>
+<div id="flash"></div>
+
+<header>
+  <div class="brand">CHUNITHM <span>// JUDGE.STREAM</span></div>
+  <div class="hstat"><span class="dot dead" id="dot"></span><span id="status">CONNECTING</span></div>
+  <div id="elapsed">00:00</div>
+  <div class="spacer"></div>
+  <button id="cfgbtn" class="hbtn" type="button">CONFIG</button>
+  <button id="fsbtn" class="hbtn" type="button">FULLSCREEN</button>
+</header>
+
+<main>
+  <div class="col jc">
+    <div class="label">JUSTICE
+CRITICAL</div>
+    <div class="num" id="n-jc">&#8211;</div>
+    <div class="mem" id="m-jc">+0x238 <b>·· ··</b> u16le</div>
+  </div>
+  <div class="col js">
+    <div class="label">JUSTICE</div>
+    <div class="num" id="n-js">&#8211;</div>
+    <div class="mem" id="m-js">+0x238 <b>·· ··</b> u16le</div>
+  </div>
+  <div class="col at">
+    <div class="label">ATTACK</div>
+    <div class="num" id="n-at">&#8211;</div>
+    <div class="mem" id="m-at">+0x238 <b>·· ··</b> u16le</div>
+  </div>
+  <div class="col ms">
+    <div class="label">MISS</div>
+    <div class="num" id="n-ms">&#8211;</div>
+    <div class="mem" id="m-ms">+0x238 <b>·· ··</b> u16le</div>
+  </div>
+</main>
+
+<footer>
+  <div id="endline"></div>
+  <div>NOTES <b id="total">0</b></div>
+  <div>EST.SCORE <b id="score">&#8211;</b></div>
+  <div id="badge"></div>
+  <div class="spacer"></div>
+  <div id="src">SDHD 2.45.00 &middot; SSE 20Hz</div>
+</footer>
+
+<div id="cfg">
+  <div class="panel" role="dialog" aria-label="backend config">
+    <h2>CONFIG <span>// BACKEND</span></h2>
+    <div class="field">
+      <label for="hostin">SSE HOST</label>
+      <input id="hostin" type="url" inputmode="url" autocapitalize="off"
+             autocorrect="off" spellcheck="false"
+             placeholder="http://192.168.1.10:8888">
+    </div>
+    <div class="field">
+      <label>THEME</label>
+      <div class="seg" id="themeseg">
+        <button class="hbtn" type="button" data-v="dark">DARK</button>
+        <button class="hbtn" type="button" data-v="light">LIGHT</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>EDGE FX <span style="color:var(--faint)">— MISS闪红 / AJ呼吸金光 / FC呼吸绿光</span></label>
+      <div class="seg" id="fxseg">
+        <button class="hbtn" type="button" data-v="on">ON</button>
+        <button class="hbtn" type="button" data-v="off">OFF</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="thresin">PACE THRESHOLD — 总NOTE数达到后才启用呼吸光</label>
+      <input id="thresin" type="number" inputmode="numeric" min="0" step="10"
+             placeholder="100">
+    </div>
+    <div class="hint">留空 = 自动（同源部署用当前地址，本地文件用 localhost:8888）。<br>手机访问填运行 chuni2api 那台机器的局域网 IP。</div>
+    <div id="testout"></div>
+    <div class="btns">
+      <button id="testbtn" class="hbtn" type="button">TEST</button>
+      <button id="savebtn" class="hbtn" type="button">SAVE</button>
+      <button id="closebtn" class="hbtn" type="button">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── data source ──────────────────────────────────────
+   优先级: ?host= 参数 > 已保存配置 > 自动
+   自动 = 同源部署用当前地址，file:// 打开用 localhost:8888 */
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch { return null; } },
+  set(k,v){ try { v === null ? localStorage.removeItem(k)
+                             : localStorage.setItem(k,v); } catch {} }
+};
+const AUTO = location.protocol.startsWith('http') ? location.origin
+                                                  : 'http://localhost:8888';
+const qs = new URLSearchParams(location.search);
+let HOST = (qs.get('host') || store.get('chuni.host') || AUTO).replace(/\/+$/,'');
+
+let THEME  = store.get('chuni.theme') || 'dark';
+let FX     = store.get('chuni.fx') !== 'off';
+let THRESH = (() => { const t = parseInt(store.get('chuni.thresh'), 10);
+                      return isNaN(t) ? 100 : Math.max(0, t); })();
+document.documentElement.dataset.theme = THEME;
+
+const KEYS = ['jc','js','at','ms'];
+const FIELD = { jc:'critical', js:'justice', at:'attack', ms:'miss' };
+
+const el = id => document.getElementById(id);
+const numEl = {}, memEl = {};
+KEYS.forEach(k => { numEl[k] = el('n-'+k); memEl[k] = el('m-'+k); });
+
+let cur        = { jc:0, js:0, at:0, ms:0 };
+let lastChange = 0;          // 判定值最后一次变化的时间戳
+let songStart  = 0;          // 本曲第一个判定出现的时间戳
+let ended      = false;
+let connected  = false;
+let srvStatus  = '';
+
+function hexLE(v){
+  const lo = (v & 0xff).toString(16).padStart(2,'0').toUpperCase();
+  const hi = ((v >> 8) & 0xff).toString(16).padStart(2,'0').toUpperCase();
+  return lo + ' ' + hi;
+}
+
+function setNum(k, v){
+  if (numEl[k].textContent !== String(v)){
+    numEl[k].textContent = v;
+    memEl[k].innerHTML = '+0x238 <b>' + hexLE(v) + '</b> u16le';
+    numEl[k].classList.remove('tick');
+    void numEl[k].offsetWidth;           // 重启动画
+    numEl[k].classList.add('tick');
+  }
+}
+
+function setStatus(text, dotCls){
+  el('status').textContent = text;
+  el('dot').className = 'dot ' + dotCls;
+}
+
+function fmtScore(s){
+  s = String(s).padStart(7,'0');
+  return s.slice(0,1) + '\u2009' + s.slice(1,4) + '\u2009' + s.slice(4);
+}
+
+function render(){
+  KEYS.forEach(k => setNum(k, cur[k]));
+
+  const total = cur.jc + cur.js + cur.at + cur.ms;
+  el('total').textContent = total;
+
+  if (total > 0){
+    const score = Math.round((1.01*cur.jc + 1.0*cur.js + 0.5*cur.at) / total * 1000000);
+    el('score').textContent = fmtScore(score);
+  } else {
+    el('score').textContent = '\u2013';
+  }
+}
+
+function judgeBadge(){
+  const {js, at, ms} = cur;
+  if (ms === 0 && at === 0 && js === 0) return 'ALL JUSTICE CRITICAL';
+  if (ms === 0 && at === 0)             return 'ALL JUSTICE';
+  if (ms === 0)                         return 'FULL COMBO';
+  return 'TRACK END';
+}
+
+/* ── edge fx ─────────────────────────────────────────── */
+function updateGlow(){
+  const g = el('glow');
+  const total = cur.jc + cur.js + cur.at + cur.ms;
+  if (!FX || cur.ms > 0 || total < THRESH){ g.className = ''; return; }
+  g.className = cur.at > 0 ? 'green' : 'gold';   // AJ金 / FC绿
+}
+
+function missFlash(){
+  if (!FX) return;
+  const f = el('flash');
+  f.classList.remove('hit');
+  void f.offsetWidth;
+  f.classList.add('hit');
+}
+
+function enterEnded(){
+  ended = true;
+  document.body.classList.add('ended');
+  const b = el('badge');
+  b.textContent = judgeBadge();
+  b.classList.add('show');
+  setStatus('TRACK RESULT', 'wait');
+}
+
+function exitEnded(){
+  ended = false;
+  document.body.classList.remove('ended');
+  el('badge').classList.remove('show');
+}
+
+/* ── SSE ─────────────────────────────────────────────── */
+let es = null, retryTimer = null;
+
+function connect(){
+  clearTimeout(retryTimer);
+  if (es) es.close();
+  es = new EventSource(HOST + '/events');
+
+  es.onopen = () => {
+    connected = true;
+    setStatus('LIVE', 'live');
+  };
+
+  es.onmessage = e => {
+    let d; try { d = JSON.parse(e.data); } catch { return; }
+    srvStatus = d.status || '';
+
+    const next = {};
+    KEYS.forEach(k => next[k] = Number(d[FIELD[k]]) || 0);
+
+    const changed = KEYS.some(k => next[k] !== cur[k]);
+    const dropped = KEYS.some(k => next[k] < cur[k]);   // 新的一曲开始
+
+    if (dropped){ exitEnded(); songStart = 0; }
+
+    if (changed){
+      if (next.ms > cur.ms && !dropped) missFlash();
+      cur = next;
+      lastChange = Date.now();
+      if (!songStart && KEYS.some(k => cur[k] > 0)) songStart = Date.now();
+      if (ended) exitEnded();
+      render();
+      updateGlow();
+      if (!ended) setStatus(srvStatus === 'IN MENU' ? 'IN MENU' : 'LIVE',
+                            srvStatus === 'IN MENU' ? 'wait' : 'live');
+    }
+  };
+
+  es.onerror = () => {
+    connected = false;
+    setStatus('RECONNECTING', 'dead');
+    es.close();
+    retryTimer = setTimeout(connect, 2000);
+  };
+}
+connect();
+
+/* ── 5s 无新数据 = 乐曲结束；计时器刷新 ───────────────── */
+setInterval(() => {
+  const total = cur.jc + cur.js + cur.at + cur.ms;
+
+  if (!ended && connected && total > 0 &&
+      lastChange && Date.now() - lastChange > 5000){
+    enterEnded();
+  }
+
+  // 经过时间：结束后冻结在最后一次变化
+  if (songStart){
+    const end = ended ? lastChange : Date.now();
+    const sec = Math.max(0, Math.floor((end - songStart) / 1000));
+    el('elapsed').textContent =
+      String(Math.floor(sec/60)).padStart(2,'0') + ':' +
+      String(sec%60).padStart(2,'0');
+  }
+}, 250);
+
+/* ── fullscreen ──────────────────────────────────────── */
+const fsbtn = el('fsbtn');
+fsbtn.addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen();
+});
+document.addEventListener('fullscreenchange', () => {
+  fsbtn.textContent = document.fullscreenElement ? 'EXIT' : 'FULLSCREEN';
+});
+
+/* ── config panel ────────────────────────────────────── */
+const cfg = el('cfg'), hostin = el('hostin'), testout = el('testout');
+const thresin = el('thresin');
+const themeseg = el('themeseg'), fxseg = el('fxseg');
+
+function segSet(seg, v){
+  [...seg.children].forEach(b => b.classList.toggle('on', b.dataset.v === v));
+}
+
+function openCfg(){
+  hostin.value = store.get('chuni.host') || '';
+  thresin.value = THRESH;
+  segSet(themeseg, THEME);
+  segSet(fxseg, FX ? 'on' : 'off');
+  testout.textContent = ''; testout.className = '';
+  cfg.classList.add('open');
+}
+function closeCfg(){ cfg.classList.remove('open'); }
+
+/* 主题和边缘光效开关即点即生效并保存 */
+themeseg.addEventListener('click', e => {
+  const v = e.target.dataset.v; if (!v) return;
+  THEME = v;
+  document.documentElement.dataset.theme = THEME;
+  store.set('chuni.theme', THEME);
+  segSet(themeseg, THEME);
+});
+fxseg.addEventListener('click', e => {
+  const v = e.target.dataset.v; if (!v) return;
+  FX = v === 'on';
+  store.set('chuni.fx', FX ? 'on' : 'off');
+  segSet(fxseg, v);
+  updateGlow();
+});
+
+function normHost(v){
+  v = v.trim().replace(/\/+$/,'');
+  if (v && !/^https?:\/\//i.test(v)) v = 'http://' + v;
+  return v;
+}
+
+el('cfgbtn').addEventListener('click', openCfg);
+el('closebtn').addEventListener('click', closeCfg);
+cfg.addEventListener('click', e => { if (e.target === cfg) closeCfg(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && cfg.classList.contains('open')) closeCfg();
+});
+
+el('testbtn').addEventListener('click', async () => {
+  const target = normHost(hostin.value) || AUTO;
+  testout.textContent = 'TESTING ' + target + ' ...';
+  testout.className = '';
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 4000);
+    const r = await fetch(target + '/data', {signal: ctl.signal});
+    clearTimeout(t);
+    const d = await r.json();
+    testout.textContent = 'OK · ' + (d.status || 'connected');
+    testout.className = 'ok';
+  } catch {
+    testout.textContent = 'UNREACHABLE';
+    testout.className = 'bad';
+  }
+});
+
+el('savebtn').addEventListener('click', () => {
+  const v = normHost(hostin.value);
+  store.set('chuni.host', v || null);
+  HOST = v || AUTO;
+
+  const t = parseInt(thresin.value, 10);
+  THRESH = isNaN(t) ? 100 : Math.max(0, t);
+  store.set('chuni.thresh', String(THRESH));
+  updateGlow();
+
+  el('src').textContent = HOST.replace(/^https?:\/\//,'') + ' \u00b7 SSE 20Hz';
+  closeCfg();
+  connect();
+});
+
+// 启动时把当前数据源显示在右下角
+el('src').textContent = HOST.replace(/^https?:\/\//,'') + ' \u00b7 SSE 20Hz';
+</script>
+</body>
+</html>

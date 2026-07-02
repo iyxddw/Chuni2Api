@@ -1,104 +1,96 @@
 # Chuni2Api
 
-> Read and expose CHUNITHM judgment counts in real time via memory scanning.
+**[English](README.en.md)**
+
+> 通过内存扫描实时读取并暴露中二节奏（CHUNITHM）的判定计数。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**[中文版](README.zh.md)**
-
 ---
 
-## Overview
+## 概述
 
-Scans the memory of CHUNITHM arcade rhythm game process (`chusanApp.exe`) to locate judgment count addresses, and exposes them in real time via a local HTTP server with Server-Sent Events (SSE). Only includes Justice Critical, Justice, Attack, and Miss judgment data.
+通过扫描中二节奏（CHUNITHM）街机音游进程（`chusanApp.exe`）的内存定位判定计数地址，并通过本地 HTTP 服务器以 SSE（Server-Sent Events）协议实时输出。仅包含Justice Critical、Justice、Attack、Miss四种判定数据。
 
-### Components
+### 组件
 
-| File | Description |
-|------|-------------|
-| [chuni2api.py](chuni2api.py) | Python version — reads game memory externally. Start anytime to begin reading. |
-| [chuni2api.cpp](chuni2api.cpp) | C++ DLL version — starts with the game, relatively simpler. |
-| [web.py](web.py) | Test frontend integration page. |
-| [DGLAB](/examples/DGLAB/) | DGHUB integration example. |
+| 文件 | 说明 |
+|------|------|
+| [chuni2api.py](chuni2api.py) | Python 版 — 从外部读取游戏内存。随时启动开始读取 |
+| [chuni2api.cpp](chuni2api.cpp) | C++ 版 — 随游戏启动，相对简单一点 |
+| [web.html](examples/web.html) | 简易游戏内数据看板 |
+| [DGLAB](/examples/DGLAB/) | DGHUB 对接示例 |
 
-### Features
+### 功能特性
 
-- **Signature-based memory scanning** — locates judgment addresses by searching for known string signatures (`NUM_jctirical\0`, etc.), not fuzzy value search. More reliable and independent of initial values.
-- **Real-time SSE stream** — provides `/events` (SSE) and `/data` (JSON) endpoints on port `8888`.
-
+- **基于签名的内存扫描** — 通过搜索已知字符串签名（`NUM_jctirical\0` 等）定位判定地址，而非模糊数值搜索。更稳定，不依赖初始值。
+- **实时 SSE 流** — 在 `8888` 端口提供 `/events`（SSE 流）和 `/data`（JSON）端点。
 ---
 
-## Usage
+## 使用方法
 
-### Python version (chuni2api.py)
+### Python 版（chuni2api.py）
 
 ```bash
 pip install psutil
 python chuni2api.py
-# → Web UI: http://localhost:8888
+# → 网页 UI: http://localhost:8888
 ```
 
-The script waits for `chusanApp.exe` to start, then scans for judgment data. When not in a song session, it displays `IN MENU` with all values returning `0`.
+脚本会等待 `chusanApp.exe` 启动，然后扫描判定数据。不在打歌途中显示IN MENU，返回值均为0
 
-### C++ DLL version (chuni2api.cpp)
+### C++ DLL 版（chuni2api.cpp）
 
-Compile with MinGW (32-bit):
+使用 MinGW 编译（32 位）：
 
 ```bash
 g++.exe -shared -o chuni2api.asi chuni2api.cpp -lws2_32 -static -static-libgcc -static-libstdc++ -O2
 ```
 
-Place `chuni2api.asi` in the game's `bin` directory with an ASI loader ([Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) with `winmm.dll` is recommended). After launching the game, visit `http://localhost:8888` for the built-in simple web page.
+将 `chuni2api.asi` 放入游戏的 `bin` 目录，并配合 ASI 加载器使用（推荐使用 [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) 提供的 `winmm.dll`）。启动游戏后，访问 `http://localhost:8888` 提供了一个内建的简易网页。
 
-### Test frontend page (web.py)
+### 数据看板（web.html）
 
-```bash
-# Step 1: Start the backend (Python or C++ version)
-python chuni2api.py
+默认连接地址为 `http://localhost:8888/`,可在网页右上角CONFIG中修改
 
-# Step 2: In another terminal, start the proxy
-python web.py
-# → Visit: http://localhost:8889
-```
+默认设置为当无Attack,Miss且Justice Critical大于100时亮起黄色氛围灯
 
-`web.py` has zero external dependencies — standard library only.
+若在上述情况下含有Attack则亮绿色
+
+出现Miss则亮短暂闪烁红色
+
+
 
 ---
 
-### DGHUB Integration
+### DGHUB对接
+[关于DGHUB](https://www.bilibili.com/video/BV1gM9tBFEmJ/)  
 
-[About DGHUB](https://www.bilibili.com/video/BV1gM9tBFEmJ/)
+请将 `DGLAB` 目录下载后压缩（如为 zip 格式），在 DGHUB 插件管理页面选择“添加插件”并上传压缩包。随后，进入插件配置页面，将 SSE 端点地址（如 `http://localhost:8888/events`）填写到对应位置即可使用。
 
-Compress the entire plugin folder (e.g., `DGLAB/`) into a ZIP file, then add or import this ZIP file into the DGHUB plugin list. Configure DGHUB to connect to the SSE endpoint, and it's ready to use.
-You can edit the intensity function in the config editor.
-
-Available variables:
+可在配置编辑页面编辑强度变化函数
+可用变量有
 ```
 jc=J-Critical, j=Justice, a=Attack, m=Miss
 ```
-
-Example:
+示例
 ```
 sqrt(m) * 0.1
 ```
+增速放缓的递增曲线，100个miss为最大值1，对应输出强度上限的100%
 
-A diminishing growth curve — 100 misses caps at 1.0, corresponding to 100% of the output intensity upper limit.
+## API 端点
 
----
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/`      | GET | 简易内建数据展示页面 |
+| `/events` | GET | SSE 流 — `data: {"critical":0,"justice":0,"attack":0,"miss":0,"status":"PLAYING"}\n\n` |
+| `/data`  | GET | 一次性 JSON 快照（同 schema） |
 
-## API Endpoints
+所有端点均包含 `Access-Control-Allow-Origin: *`。
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/`      | GET    | Simple built-in data display page |
-| `/events` | GET   | SSE stream — `data: {"critical":0,"justice":0,"attack":0,"miss":0,"status":"PLAYING"}\n\n` |
-| `/data`  | GET    | Single-shot JSON snapshot (same schema) |
 
-All endpoints include `Access-Control-Allow-Origin: *`.
+## 免责声明
 
----
-
-## Disclaimer
-
-This software reads process memory of CHUNITHM for **personal streaming and recording purposes only**. It does **not** modify game memory, inject code, or interact with the game beyond reading. Use at your own risk. This project is not affiliated with or endorsed by SEGA.
-Contains AI-generated content.
+本软件仅用于读取 CHUNITHM 进程内存，**仅供个人直播和录屏使用**。它**不会**修改游戏内存、注入代码或以任何超出读取的方式与游戏交互。使用风险自负。本项目与 SEGA 无关，亦未获 SEGA 认可。
+包含AI生成内容

@@ -40,6 +40,7 @@ async def main() -> None:
         "duration_s": 1.5,
         "channel": "both",
         "preset": "CS2-受伤",
+        "continuous_mode": False,
     }
 
     # 函数模式可用的数学函数
@@ -209,8 +210,43 @@ async def main() -> None:
                     "pct": 0,
                 }))
 
-            # MISS 增加 → 触发硬件
-            if cur > last_miss:
+            # ── 持续触发模式（仅函数模式可用）：每帧更新，无固定时长 ──
+            if cfg["continuous_mode"] and cfg["mode"] == "function":
+                pct = calc_strength(jc, js, at, cur)
+                if cfg["debug"]:
+                    try:
+                        ns = {"jc": jc, "j": js, "a": at, "m": cur, **MATH_FUNCS}
+                        y = eval(cfg["formula"], {"__builtins__": {}}, ns)
+                        await ws.send(json.dumps({
+                            "op": "log", "level": "debug",
+                            "message": f"CONT_CALC: formula={cfg['formula']} | jc={jc} j={js} a={at} m={cur} → y={y:.3f} → pct={pct}",
+                        }))
+                    except Exception as exc:
+                        await ws.send(json.dumps({
+                            "op": "log", "level": "error",
+                            "message": f"CONT_CALC ERROR: {exc}",
+                        }))
+                await ws.send(json.dumps({
+                    "op": "set_strength",
+                    "channel": cfg["channel"],
+                    "pct": pct,
+                }))
+                if cfg["debug"]:
+                    await ws.send(json.dumps({
+                        "op": "log", "level": "debug",
+                        "message": f"CONT_OUT: set_strength ch={cfg['channel']} pct={pct}%",
+                    }))
+                await ws.send(json.dumps({
+                    "op": "status",
+                    "fields": {
+                        "display_status": f"CONT: {jc}/{js}/{at}/{cur} → {pct}%",
+                        "miss": cur,
+                        "strength_pct": pct,
+                    },
+                }))
+
+            # ── 标准触发模式：MISS 增加 → 输出固定时长的信号 ──
+            elif cur > last_miss:
                 pct = calc_strength(jc, js, at, cur)
                 if cfg["debug"]:
                     # 函数模式时输出中间变量，方便排查公式问题

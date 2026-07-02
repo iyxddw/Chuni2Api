@@ -41,6 +41,13 @@
           "description": "固定强度: 每次 MISS 输出固定值 / 函数模式: 用公式实时计算强度"
         },
         {
+          "key": "continuous_mode",
+          "type": "bool",
+          "label": "持续触发模式",
+          "default": false,
+          "description": "【仅函数模式】开启后不再输出固定时长的信号，而是根据函数计算结果持续输出强度（每帧更新）"
+        },
+        {
           "key": "fixed_strength",
           "type": "percent",
           "label": "固定强度",
